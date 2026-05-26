@@ -28,6 +28,11 @@ const DEFAULT_PANEL_OPACITY = 82;
 const MIN_PANEL_OPACITY = 40;
 const MAX_PANEL_OPACITY = 100;
 
+function cssVar(name, fallback = '') {
+    const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return value || fallback;
+}
+
 // Debug logging — only shows in DevTools (development mode).
 // Regular users won't see verbose logs in production.
 const DEBUG = (new URLSearchParams(window.location.search)).has('debug');
@@ -1495,7 +1500,7 @@ function renderChart(history) {
         {
             label: 'Session',
             data: history.map((entry) => entry.session),
-            borderColor: '#FF6B4A',
+            borderColor: cssVar('--accent-primary', '#cc785c'),
             backgroundColor: 'transparent',
             borderWidth: 2,
             stepped: true,
@@ -1506,7 +1511,7 @@ function renderChart(history) {
         {
             label: 'Weekly',
             data: history.map((entry) => entry.weekly),
-            borderColor: '#0A84FF',
+            borderColor: cssVar('--accent-info', '#80AADD'),
             backgroundColor: 'transparent',
             borderWidth: 2,
             stepped: true,
@@ -1522,7 +1527,7 @@ function renderChart(history) {
             datasets.push({
             label: 'Sonnet',
             data: sonnetData,
-            borderColor: '#10b981',
+            borderColor: cssVar('--accent-success', '#7AB948'),
             backgroundColor: 'transparent',
             borderWidth: 2,
             stepped: true,
@@ -1539,7 +1544,7 @@ function renderChart(history) {
             datasets.push({
             label: 'Extra Usage',
             data: extraUsageData,
-            borderColor: '#f59e0b',
+            borderColor: cssVar('--accent-warning', '#D1A041'),
             backgroundColor: 'transparent',
             borderWidth: 2,
             stepped: true,
@@ -1572,7 +1577,8 @@ function renderChart(history) {
                         maxRotation: 0,
                         minRotation: 0,
                         font: {
-                            size: 10
+                            size: 10,
+                            family: cssVar('--font-sans', 'Inter, sans-serif')
                         },
                         callback(value, index) {
                             const tf = (window._cachedSettings || {}).timeFormat || '12h';
@@ -1588,12 +1594,13 @@ function renderChart(history) {
                     max: yMax,
                     ticks: {
                         font: {
-                            size: 10
+                            size: 10,
+                            family: cssVar('--font-sans', 'Inter, sans-serif')
                         },
                         callback: (value) => `${value}%`
                     },
                     grid: {
-                        color: 'rgba(255, 255, 255, 0.05)'
+                        color: cssVar('--color-border-secondary', 'rgba(250, 249, 245, 0.06)')
                     }
                 }
             },

@@ -29,6 +29,8 @@
     "electron-builder": "^24.9.1"
   },
   "dependencies": {
+    "@fontsource/inter": "^5.2.8",
+    "@fontsource/jetbrains-mono": "^5.2.8",
     "chart.js": "^4.5.1",
     "electron-store": "^8.1.0"
   },
