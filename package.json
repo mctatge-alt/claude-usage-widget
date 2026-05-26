@@ -1,0 +1,69 @@
+{
+  "name": "claude-usage-widget",
+  "version": "1.7.4",
+  "description": "A macOS menu bar widget for Claude.ai usage monitoring",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --mac",
+    "build:mac": "electron-builder --mac",
+    "dev": "cross-env NODE_ENV=development electron ."
+  },
+  "keywords": [
+    "claude",
+    "usage",
+    "widget",
+    "electron",
+    "macos"
+  ],
+  "author": "Mitchell Tatge",
+  "license": "MIT",
+  "copyright": "Copyright © 2025 Mitchell Tatge",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "devDependencies": {
+    "@electron/notarize": "^3.1.1",
+    "cross-env": "^7.0.3",
+    "electron": "^28.3.3",
+    "electron-builder": "^24.9.1"
+  },
+  "dependencies": {
+    "chart.js": "^4.5.1",
+    "electron-store": "^8.1.0"
+  },
+  "build": {
+    "appId": "com.claudeusage.widget",
+    "productName": "Claude Meter",
+    "copyright": "Copyright © 2025 Mitchell Tatge",
+    "publish": null,
+    "files": [
+      "**/*",
+      "!**/*.ts",
+      "!*.md"
+    ],
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.icns",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "notarize": true,
+      "extendInfo": {
+        "NSHumanReadableCopyright": "Copyright © 2025 Mitchell Tatge"
+      }
+    },
+    "dmg": {
+      "artifactName": "${productName}-${version}-macOS-arm64.dmg"
+    }
+  }
+}
