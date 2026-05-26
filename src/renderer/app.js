@@ -6,6 +6,7 @@ let latestUsageData = null;
 let isExpanded = false;
 let isCompactMode = false;
 let isSidebarMode = false;
+let isFullscreen = false;
 let usageChart = null;
 let graphVisible = false;
 let suppressSidebarAutoLayout = false;
@@ -97,11 +98,7 @@ const elements = {
     orgSelector: document.getElementById('orgSelector'),
     orgSelectorCol: document.getElementById('orgSelectorCol'),
 
-    updateBanner: document.getElementById('updateBanner'),
-    updateBannerText: document.getElementById('updateBannerText'),
-    updateBannerDismiss: document.getElementById('updateBannerDismiss'),
     settingsVersionLabel: document.getElementById('settingsVersionLabel'),
-    settingsUpdateLink: document.getElementById('settingsUpdateLink'),
     usageAlertsToggle: document.getElementById('usageAlertsToggle'),
     compactModeToggle: document.getElementById('compactModeToggle'),
     compactModeToggleCompact: document.getElementById('compactModeToggleCompact'),
@@ -191,6 +188,17 @@ async function init() {
     if (window.electronAPI.onWindowResize) {
         window.electronAPI.onWindowResize(({ width, height }) => checkLayoutFromSize(width, height));
     }
+
+    if (window.electronAPI.onFullscreenChanged) {
+        window.electronAPI.onFullscreenChanged((fullScreen) => {
+            isFullscreen = fullScreen;
+            updateTrafficLightState();
+            if (!fullScreen && !isCompactMode && !isSidebarMode) resizeWidget();
+        });
+    }
+
+    isFullscreen = await window.electronAPI.isWindowFullscreen();
+    updateTrafficLightState();
 
     const layoutObserver = new ResizeObserver((entries) => {
         const { width, height } = entries[0].contentRect;
@@ -301,9 +309,7 @@ function setupEventListeners() {
 
     if (elements.expandBtn) {
         elements.expandBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            restoreNormalLayout();
+            handleGreenButtonClick(e);
         });
     }
 
@@ -421,12 +427,6 @@ function setupEventListeners() {
             startAutoUpdate();
         });
     }
-
-    // Update banner
-    elements.updateBannerDismiss.addEventListener('click', () => {
-        elements.updateBanner.style.display = 'none';
-        if (!isSidebarMode) resizeWidget();
-    });
 
     // Compact mode — collapse chevron (normal → compact)
     if (elements.compactCollapseBtn) {
@@ -800,21 +800,16 @@ function refreshExtraTimers() {
     });
 }
 
-const BANNER_HEIGHT = 28;
 const EXPAND_OVERHEAD = 28; // margin-top(12) + padding-top(6) + bottom buffer(10)
 
-function resizeWidget(bannerVisible) {
+function resizeWidget() {
     if (isSidebarMode) return;
-    const hasBanner = bannerVisible !== undefined
-        ? bannerVisible
-        : elements.updateBanner.style.display !== 'none';
-    const bannerOffset = hasBanner ? BANNER_HEIGHT : 0;
     const extraCount = elements.extraRows.children.length;
     const expandedOffset = isExpanded && extraCount > 0
         ? EXPAND_OVERHEAD + (extraCount * WIDGET_ROW_HEIGHT)
         : 0;
     const graphOffset = graphVisible ? GRAPH_HEIGHT : 0;
-    const totalHeight = WIDGET_HEIGHT_COLLAPSED + expandedOffset + graphOffset + bannerOffset;
+    const totalHeight = WIDGET_HEIGHT_COLLAPSED + expandedOffset + graphOffset;
     window.electronAPI.resizeWindow(totalHeight);
 }
 
@@ -983,6 +978,37 @@ function checkLayoutFromSize(width, height) {
     }
 }
 
+async function handleGreenButtonClick(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isSidebarMode || window.innerWidth < SIDEBAR_EXIT_WIDTH) {
+        await restoreNormalLayout();
+        return;
+    }
+
+    const { fullScreen } = await window.electronAPI.toggleFullscreen();
+    isFullscreen = fullScreen;
+    updateTrafficLightState();
+}
+
+function updateTrafficLightState() {
+    if (!elements.expandBtn) return;
+
+    const showRestore = isSidebarMode || isFullscreen;
+    elements.expandBtn.classList.toggle('is-restore', showRestore);
+
+    let label = 'Enter full screen';
+    if (isFullscreen) {
+        label = 'Exit full screen';
+    } else if (isSidebarMode) {
+        label = 'Restore normal size';
+    }
+
+    elements.expandBtn.title = label;
+    elements.expandBtn.setAttribute('aria-label', label);
+}
+
 async function restoreNormalLayout() {
     pendingNormalLayoutRestore = true;
     suppressSidebarAutoLayout = true;
@@ -990,6 +1016,8 @@ async function restoreNormalLayout() {
 
     await window.electronAPI.restoreWindowSize();
     if (!isCompactMode) resizeWidget();
+    isFullscreen = await window.electronAPI.isWindowFullscreen();
+    updateTrafficLightState();
 
     finishNormalLayoutRestoreIfReady(window.innerWidth);
 
@@ -1000,6 +1028,8 @@ async function restoreNormalLayout() {
 
             await window.electronAPI.restoreWindowSize();
             if (!isCompactMode) resizeWidget();
+            isFullscreen = await window.electronAPI.isWindowFullscreen();
+            updateTrafficLightState();
             finishNormalLayoutRestoreIfReady(window.innerWidth);
 
             if (pendingNormalLayoutRestore) {
@@ -1045,6 +1075,7 @@ function applySidebarMode(sidebar) {
     }
 
     if (!sidebar && !isCompactMode) resizeWidget();
+    updateTrafficLightState();
 }
 
 function showActiveContentView() {
@@ -1812,9 +1843,6 @@ function applyPanelOpacity(percent) {
         elements.panelOpacityValue.textContent = `${clamped}%`;
     }
 }
-
-// Update check disabled — fork maintains its own release channel
-async function checkForUpdate() {}
 
 // Start the application
 init();

@@ -258,6 +258,14 @@ function createMainWindow() {
     }, 300);
   });
 
+  mainWindow.on('enter-full-screen', () => {
+    mainWindow.webContents.send('fullscreen-changed', true);
+  });
+
+  mainWindow.on('leave-full-screen', () => {
+    mainWindow.webContents.send('fullscreen-changed', false);
+  });
+
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
@@ -1176,7 +1184,7 @@ ipcMain.handle('set-window-position', (event, { x, y }) => {
 
 ipcMain.on('open-external', (event, url) => {
   // Trust boundary enforcement: duplicate allowlist check in main process
-  const allowedDomains = ['claude.ai', 'github.com'];
+  const allowedDomains = ['claude.ai'];
   try {
     const parsedUrl = new URL(url);
     const isAllowed = allowedDomains.some(domain => 
@@ -1249,6 +1257,17 @@ ipcMain.on('set-compact-mode', (event, compact) => {
 });
 
 ipcMain.handle('restore-window-size', () => restoreMainWindowSize());
+
+ipcMain.handle('is-window-fullscreen', () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return false;
+  return mainWindow.isFullScreen();
+});
+
+ipcMain.handle('toggle-fullscreen', () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return { fullScreen: false };
+  mainWindow.setFullScreen(!mainWindow.isFullScreen());
+  return { fullScreen: mainWindow.isFullScreen() };
+});
 
 // Settings handlers
 ipcMain.handle('get-settings', () => {
@@ -1430,9 +1449,6 @@ ipcMain.handle('detect-session-key', async () => {
     loginWin.loadURL('https://claude.ai/login');
   });
 });
-
-// Update checks are handled outside this macOS fork.
-ipcMain.handle('check-for-update', () => Promise.resolve({ hasUpdate: false, version: null }));
 
 ipcMain.handle('fetch-usage-data', async (event, options = {}) => {
   // Use the same credential retrieval logic as get-credentials

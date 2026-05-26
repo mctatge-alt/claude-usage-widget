@@ -1,7 +1,7 @@
 {
   "name": "claude-usage-widget",
   "version": "1.7.4",
-  "description": "A macOS menu bar widget for Claude.ai usage monitoring",
+  "description": "Source-only macOS menu bar widget for Claude.ai usage monitoring (Apple Silicon)",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -24,7 +24,6 @@
     "npm": ">=9.0.0"
   },
   "devDependencies": {
-    "@electron/notarize": "^3.1.1",
     "cross-env": "^7.0.3",
     "electron": "^28.3.3",
     "electron-builder": "^24.9.1"
@@ -53,11 +52,9 @@
         }
       ],
       "icon": "assets/icon.icns",
-      "hardenedRuntime": true,
+      "identity": null,
+      "hardenedRuntime": false,
       "gatekeeperAssess": false,
-      "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist",
-      "notarize": true,
       "extendInfo": {
         "NSHumanReadableCopyright": "Copyright © 2025 Mitchell Tatge"
       }

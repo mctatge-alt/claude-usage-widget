@@ -25,7 +25,7 @@
                 <div class="traffic-lights">
                     <button class="traffic-light close" id="closeBtn" title="Quit" aria-label="Quit"></button>
                     <button class="traffic-light minimize" id="minimizeBtn" title="Minimize" aria-label="Minimize"></button>
-                    <button class="traffic-light expand" id="expandBtn" title="Restore normal size" aria-label="Restore normal size"></button>
+                    <button class="traffic-light expand" id="expandBtn" title="Enter full screen" aria-label="Enter full screen"></button>
                 </div>
                 <div class="title">
                     <img src="../../assets/logo.png" alt="" class="app-logo">
@@ -53,14 +53,8 @@
                 </div>
             </div>
 
-            <!-- Update Banner (hidden by default) -->
-            <div class="update-banner" id="updateBanner" style="display: none;">
-                <span class="update-banner-text" id="updateBannerText"></span>
-                <button class="update-banner-dismiss" id="updateBannerDismiss" title="Dismiss">✕</button>
-            </div>
-
-            <!-- Loading State -->
-            <div class="loading-container" id="loadingContainer">
+            <!-- Loading State (shown only while fetching with saved credentials) -->
+            <div class="loading-container" id="loadingContainer" style="display: none;">
                 <div class="spinner"></div>
                 <p>Loading usage data...</p>
             </div>
@@ -418,7 +412,6 @@
 
                     <div class="settings-footer">
                         <span class="settings-version-label" id="settingsVersionLabel">v1.5.0</span>
-                        <span class="settings-update-link" id="settingsUpdateLink" style="display: none;"></span>
                         <button class="logout-btn" id="logoutBtn">Sign Out</button>
                     </div>
                 </div>

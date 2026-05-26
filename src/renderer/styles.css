@@ -85,6 +85,7 @@ body {
 }
 
 .traffic-light {
+    position: relative;
     width: 12px;
     height: 12px;
     border-radius: 50%;
@@ -92,11 +93,37 @@ body {
     padding: 0;
     cursor: default;
     transition: filter 0.15s ease;
+    flex-shrink: 0;
+}
+
+.traffic-light::before,
+.traffic-light::after {
+    content: '';
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease;
+}
+
+.title-bar:hover .traffic-light::before,
+.title-bar:hover .traffic-light::after {
+    opacity: 1;
 }
 
 .traffic-light.close {
     background: #FF5F57;
     box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.12);
+}
+
+.traffic-light.close::before {
+    top: 50%;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    transform: translate(-50%, -50%);
+    background:
+        linear-gradient(45deg, transparent 42%, #4d211c 42%, #4d211c 58%, transparent 58%),
+        linear-gradient(-45deg, transparent 42%, #4d211c 42%, #4d211c 58%, transparent 58%);
 }
 
 .traffic-light.minimize {
@@ -105,25 +132,71 @@ body {
     cursor: pointer;
 }
 
+.traffic-light.minimize::before {
+    top: 50%;
+    left: 50%;
+    width: 8px;
+    height: 1.5px;
+    transform: translate(-50%, -50%);
+    background: #985700;
+    border-radius: 1px;
+}
+
 .traffic-light.expand {
     background: #28C840;
     box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.12);
     cursor: pointer;
 }
 
-.title-bar:hover .traffic-light.expand:hover {
-    filter: brightness(1.08);
+.traffic-light.expand::before,
+.traffic-light.expand::after {
+    width: 4px;
+    height: 4px;
+}
+
+.traffic-light.expand::before {
+    top: 2px;
+    left: 2px;
+    border-top: 1.5px solid #1b5e20;
+    border-left: 1.5px solid #1b5e20;
+}
+
+.traffic-light.expand::after {
+    bottom: 2px;
+    right: 2px;
+    border-bottom: 1.5px solid #1b5e20;
+    border-right: 1.5px solid #1b5e20;
+}
+
+.traffic-light.expand.is-restore::before {
+    top: auto;
+    left: auto;
+    bottom: 2px;
+    right: 2px;
+    border-top: none;
+    border-left: none;
+    border-bottom: 1.5px solid #1b5e20;
+    border-right: 1.5px solid #1b5e20;
+}
+
+.traffic-light.expand.is-restore::after {
+    bottom: auto;
+    right: auto;
+    top: 2px;
+    left: 2px;
+    border-bottom: none;
+    border-right: none;
+    border-top: 1.5px solid #1b5e20;
+    border-left: 1.5px solid #1b5e20;
 }
 
 .title-bar:hover .traffic-light.close {
     cursor: pointer;
 }
 
-.title-bar:hover .traffic-light.close:hover {
-    filter: brightness(1.08);
-}
-
-.title-bar:hover .traffic-light.minimize:hover {
+.title-bar:hover .traffic-light.close:hover,
+.title-bar:hover .traffic-light.minimize:hover,
+.title-bar:hover .traffic-light.expand:hover {
     filter: brightness(1.08);
 }
 
@@ -1303,46 +1376,6 @@ body.theme-light .expand-arrow {
     color: #909090;
 }
 
-/* ── Update Banner ─────────────────────────────────────────── */
-.update-banner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: #1a2a00;
-    padding: 4px 10px;
-    gap: 6px;
-    -webkit-app-region: no-drag;
-}
-
-.update-banner-text {
-    font-size: 11px;
-    color: #a8e063;
-    cursor: pointer;
-    flex: 1;
-    text-align: center;
-    font-family: inherit;
-}
-
-.update-banner-text:hover {
-    text-decoration: underline;
-}
-
-.update-banner-dismiss {
-    background: transparent;
-    border: none;
-    color: #a8e063;
-    cursor: pointer;
-    font-size: 11px;
-    padding: 0 2px;
-    line-height: 1;
-    opacity: 0.7;
-    flex-shrink: 0;
-}
-
-.update-banner-dismiss:hover {
-    opacity: 1;
-}
-
 /* ── Settings version row ──────────────────────────────────── */
 .settings-version-label {
     font-size: 11px;
@@ -1350,32 +1383,8 @@ body.theme-light .expand-arrow {
     font-family: inherit;
 }
 
-.settings-update-link {
-    font-size: 11px;
-    color: #a8e063;
-    cursor: pointer;
-    font-family: inherit;
-}
-
-.settings-update-link:hover {
-    text-decoration: underline;
-}
-
-body.theme-light .update-banner {
-    background: #e8f5c8;
-}
-
-body.theme-light .update-banner-text,
-body.theme-light .update-banner-dismiss {
-    color: #4a7a00;
-}
-
 body.theme-light .settings-version-label {
     color: #aaaacc;
-}
-
-body.theme-light .settings-update-link {
-    color: #4a7a00;
 }
 
 /* ── Settings select dropdowns ─────────────────────────────── */
@@ -1715,6 +1724,43 @@ body.sidebar-mode .traffic-light {
     width: 10px;
     height: 10px;
     flex-shrink: 0;
+}
+
+body.sidebar-mode .traffic-light.close::before {
+    width: 6px;
+    height: 6px;
+}
+
+body.sidebar-mode .traffic-light.minimize::before {
+    width: 6px;
+    height: 1px;
+}
+
+body.sidebar-mode .traffic-light.expand::before,
+body.sidebar-mode .traffic-light.expand::after {
+    width: 3px;
+    height: 3px;
+    border-width: 1px;
+}
+
+body.sidebar-mode .traffic-light.expand::before {
+    top: 1.5px;
+    left: 1.5px;
+}
+
+body.sidebar-mode .traffic-light.expand::after {
+    bottom: 1.5px;
+    right: 1.5px;
+}
+
+body.sidebar-mode .traffic-light.expand.is-restore::before {
+    bottom: 1.5px;
+    right: 1.5px;
+}
+
+body.sidebar-mode .traffic-light.expand.is-restore::after {
+    top: 1.5px;
+    left: 1.5px;
 }
 
 body.sidebar-mode .title {

@@ -2,8 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 // Allowed domains for openExternal — prevents renderer from opening arbitrary URLs
 const ALLOWED_EXTERNAL_DOMAINS = [
-  'claude.ai',
-  'github.com'
+  'claude.ai'
 ];
 
 function isAllowedExternalUrl(url) {
@@ -70,8 +69,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getSettings: () => ipcRenderer.invoke('get-settings'),
   saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
 
-  // Updates
-  checkForUpdate: () => ipcRenderer.invoke('check-for-update'),
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
 
   // Notifications
@@ -82,6 +79,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Restore full widget width (exit narrow/sidebar layout)
   restoreWindowSize: () => ipcRenderer.invoke('restore-window-size'),
+
+  isWindowFullscreen: () => ipcRenderer.invoke('is-window-fullscreen'),
+  toggleFullscreen: () => ipcRenderer.invoke('toggle-fullscreen'),
+  onFullscreenChanged: (callback) => {
+    ipcRenderer.on('fullscreen-changed', (_event, fullScreen) => callback(fullScreen));
+  },
 
   // Window resize (macOS split-screen / manual resize)
   onWindowResize: (callback) => {
