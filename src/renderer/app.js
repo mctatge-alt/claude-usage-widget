@@ -21,9 +21,11 @@ const WIDGET_HEIGHT_COLLAPSED = 155;
 const WIDGET_ROW_HEIGHT = 30;
 const GRAPH_HEIGHT = 232;
 const SIDEBAR_ENTER_WIDTH = 200;
-const SIDEBAR_EXIT_WIDTH = 260;
-const SIDEBAR_ENTER_ASPECT = 1.25;
-const SIDEBAR_EXIT_ASPECT = 1.1;
+// Horizontal grid needs ~500px; use hysteresis so sidebar doesn't flicker at the boundary
+const HORIZONTAL_LAYOUT_MIN_WIDTH = 500;
+const SIDEBAR_EXIT_WIDTH = HORIZONTAL_LAYOUT_MIN_WIDTH + 20;
+const SIDEBAR_ENTER_ASPECT = 1.15;
+const SIDEBAR_EXIT_ASPECT = 1.05;
 const WIDGET_WIDTH = 590;
 const DEFAULT_PANEL_OPACITY = 82;
 const MIN_PANEL_OPACITY = 40;
@@ -122,6 +124,8 @@ const elements = {
     sidebarSessionPct: document.getElementById('sidebarSessionPct'),
     sidebarWeeklyFill: document.getElementById('sidebarWeeklyFill'),
     sidebarWeeklyPct: document.getElementById('sidebarWeeklyPct'),
+    sidebarSessionResetsAt: document.getElementById('sidebarSessionResetsAt'),
+    sidebarWeeklyResetsAt: document.getElementById('sidebarWeeklyResetsAt'),
     panelOpacity: document.getElementById('panelOpacity'),
     panelOpacityValue: document.getElementById('panelOpacityValue')
 };
@@ -953,14 +957,16 @@ function applyCompactMode(compact) {
 
 function shouldUseSidebarLayout(width, height) {
     if (width <= SIDEBAR_ENTER_WIDTH) return true;
+    if (width < HORIZONTAL_LAYOUT_MIN_WIDTH) return true;
     if (width < WIDGET_WIDTH && height / Math.max(width, 1) >= SIDEBAR_ENTER_ASPECT) return true;
     return false;
 }
 
 function shouldExitSidebarLayout(width, height) {
+    if (width >= WIDGET_WIDTH) return true;
     if (width >= SIDEBAR_EXIT_WIDTH) return true;
     const aspect = height / Math.max(width, 1);
-    if (width >= SIDEBAR_ENTER_WIDTH + 20 && aspect < SIDEBAR_EXIT_ASPECT) return true;
+    if (width >= HORIZONTAL_LAYOUT_MIN_WIDTH && aspect < SIDEBAR_EXIT_ASPECT) return true;
     return false;
 }
 
@@ -993,7 +999,7 @@ async function handleGreenButtonClick(e) {
     e.preventDefault();
     e.stopPropagation();
 
-    if (isSidebarMode || window.innerWidth < SIDEBAR_EXIT_WIDTH) {
+    if (isSidebarMode || window.innerWidth < HORIZONTAL_LAYOUT_MIN_WIDTH) {
         await restoreNormalLayout();
         return;
     }
@@ -1146,6 +1152,21 @@ function updateSidebarBars(data) {
     elements.sidebarWeeklyFill.className = 'sidebar-bar-fill weekly';
     if (weeklyPct >= dangerThreshold) elements.sidebarWeeklyFill.classList.add('danger');
     else if (weeklyPct >= warnThreshold) elements.sidebarWeeklyFill.classList.add('warning');
+
+    const settings = window._cachedSettings || {};
+    const timeFormat = settings.timeFormat || '12h';
+    const weeklyDateFormat = settings.weeklyDateFormat || 'date';
+    const sessionResetsAt = data.five_hour?.resets_at;
+    const weeklyResetsAt = data.seven_day?.resets_at;
+
+    if (elements.sidebarSessionResetsAt) {
+        elements.sidebarSessionResetsAt.textContent = formatResetsAt(sessionResetsAt, false, timeFormat, weeklyDateFormat);
+        elements.sidebarSessionResetsAt.style.opacity = sessionResetsAt ? '1' : '0.4';
+    }
+    if (elements.sidebarWeeklyResetsAt) {
+        elements.sidebarWeeklyResetsAt.textContent = formatResetsAt(weeklyResetsAt, true, timeFormat, weeklyDateFormat);
+        elements.sidebarWeeklyResetsAt.style.opacity = weeklyResetsAt ? '1' : '0.4';
+    }
 }
 // Persist compact mode setting without touching the rest of settings — debounced
 let _saveCompactTimer = null;
