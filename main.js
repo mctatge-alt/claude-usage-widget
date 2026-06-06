@@ -1688,7 +1688,9 @@ app.whenReady().then(async () => {
 });
 
 app.on('will-quit', () => {
-  globalShortcut.unregisterAll();
+  if (app.isReady()) {
+    globalShortcut.unregisterAll();
+  }
 });
 
 app.on('window-all-closed', () => {

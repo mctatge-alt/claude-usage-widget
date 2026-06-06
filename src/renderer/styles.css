@@ -171,15 +171,22 @@ body {
     box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.12);
 }
 
-.traffic-light.close::before {
+.traffic-light.close::before,
+.traffic-light.close::after {
     top: 50%;
     left: 50%;
-    width: 8px;
-    height: 8px;
-    transform: translate(-50%, -50%);
-    background:
-        linear-gradient(45deg, transparent 42%, #4d211c 42%, #4d211c 58%, transparent 58%),
-        linear-gradient(-45deg, transparent 42%, #4d211c 42%, #4d211c 58%, transparent 58%);
+    width: 7px;
+    height: 1.5px;
+    background: #4a0e0b;
+    border-radius: 0.5px;
+}
+
+.traffic-light.close::before {
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.traffic-light.close::after {
+    transform: translate(-50%, -50%) rotate(-45deg);
 }
 
 .traffic-light.minimize {
@@ -191,11 +198,11 @@ body {
 .traffic-light.minimize::before {
     top: 50%;
     left: 50%;
-    width: 8px;
+    width: 7px;
     height: 1.5px;
     transform: translate(-50%, -50%);
     background: #985700;
-    border-radius: 1px;
+    border-radius: 0.5px;
 }
 
 .traffic-light.expand {
@@ -206,44 +213,40 @@ body {
 
 .traffic-light.expand::before,
 .traffic-light.expand::after {
-    width: 4px;
-    height: 4px;
+    top: 50%;
+    left: 50%;
+    width: 3px;
+    height: 3px;
+    background: transparent;
+    border: none;
 }
 
 .traffic-light.expand::before {
-    top: 2px;
-    left: 2px;
+    transform: translate(calc(-50% - 2px), calc(-50% - 2px));
     border-top: 1.5px solid #1b5e20;
     border-left: 1.5px solid #1b5e20;
 }
 
 .traffic-light.expand::after {
-    bottom: 2px;
-    right: 2px;
+    transform: translate(calc(-50% + 2px), calc(-50% + 2px));
     border-bottom: 1.5px solid #1b5e20;
     border-right: 1.5px solid #1b5e20;
 }
 
 .traffic-light.expand.is-restore::before {
-    top: auto;
-    left: auto;
-    bottom: 2px;
-    right: 2px;
-    border-top: none;
-    border-left: none;
-    border-bottom: 1.5px solid #1b5e20;
-    border-right: 1.5px solid #1b5e20;
+    transform: translate(calc(-50% - 1px), calc(-50% + 1px));
+    border-top: 1.5px solid #1b5e20;
+    border-left: 1.5px solid #1b5e20;
+    border-bottom: none;
+    border-right: none;
 }
 
 .traffic-light.expand.is-restore::after {
-    bottom: auto;
-    right: auto;
-    top: 2px;
-    left: 2px;
-    border-bottom: none;
-    border-right: none;
-    border-top: 1.5px solid #1b5e20;
-    border-left: 1.5px solid #1b5e20;
+    transform: translate(calc(-50% + 1px), calc(-50% - 1px));
+    border-bottom: 1.5px solid #1b5e20;
+    border-right: 1.5px solid #1b5e20;
+    border-top: none;
+    border-left: none;
 }
 
 .title-bar:hover .traffic-light.close {
@@ -1793,41 +1796,38 @@ body.sidebar-mode .traffic-light {
     flex-shrink: 0;
 }
 
-body.sidebar-mode .traffic-light.close::before {
-    width: 6px;
-    height: 6px;
+body.sidebar-mode .traffic-light.close::before,
+body.sidebar-mode .traffic-light.close::after {
+    width: 5px;
+    height: 1px;
 }
 
 body.sidebar-mode .traffic-light.minimize::before {
-    width: 6px;
+    width: 5px;
     height: 1px;
 }
 
 body.sidebar-mode .traffic-light.expand::before,
 body.sidebar-mode .traffic-light.expand::after {
-    width: 3px;
-    height: 3px;
+    width: 2.5px;
+    height: 2.5px;
     border-width: 1px;
 }
 
 body.sidebar-mode .traffic-light.expand::before {
-    top: 1.5px;
-    left: 1.5px;
+    transform: translate(calc(-50% - 1.5px), calc(-50% - 1.5px));
 }
 
 body.sidebar-mode .traffic-light.expand::after {
-    bottom: 1.5px;
-    right: 1.5px;
+    transform: translate(calc(-50% + 1.5px), calc(-50% + 1.5px));
 }
 
 body.sidebar-mode .traffic-light.expand.is-restore::before {
-    bottom: 1.5px;
-    right: 1.5px;
+    transform: translate(calc(-50% - 0.75px), calc(-50% + 0.75px));
 }
 
 body.sidebar-mode .traffic-light.expand.is-restore::after {
-    top: 1.5px;
-    left: 1.5px;
+    transform: translate(calc(-50% + 0.75px), calc(-50% - 0.75px));
 }
 
 body.sidebar-mode .title {
