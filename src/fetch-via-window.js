@@ -25,6 +25,18 @@ const BLOCKED_SIGNATURES = [
   { pattern: '<html', error: 'UnexpectedHTML' },
 ];
 
+function urlsMatch(actualUrl, expectedUrl) {
+  try {
+    return new URL(actualUrl).href === new URL(expectedUrl).href;
+  } catch {
+    return false;
+  }
+}
+
+function isIgnorableLoadUrl(url) {
+  return !url || url === 'about:blank';
+}
+
 /**
  * Parse and validate response body text
  * @param {string} bodyText - Raw body text from the page * @returns {Object} Parsed JSON data
@@ -70,6 +82,11 @@ function fetchViaWindow(url, { timeoutMs = 30000 } = {}) {
     }, timeoutMs);
 
     win.webContents.on('did-finish-load', async () => {
+      const currentUrl = win.webContents.getURL();
+      if (isIgnorableLoadUrl(currentUrl) || !urlsMatch(currentUrl, url)) {
+        return;
+      }
+
       try {
         const bodyText = await win.webContents.executeJavaScript(
           'document.body.innerText || document.body.textContent'
@@ -86,7 +103,8 @@ function fetchViaWindow(url, { timeoutMs = 30000 } = {}) {
       }
     });
 
-    win.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    win.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+      if (isIgnorableLoadUrl(validatedURL)) return;
       clearTimeout(timeout);
       win.close();
       reject(new Error(`LoadFailed: ${errorCode} ${errorDescription}`));
@@ -143,6 +161,12 @@ function fetchMultipleViaWindow(urls, { timeoutMs = 10000 } = {}) {
     }
 
     win.webContents.on('did-finish-load', async () => {
+      const expectedUrl = urls[currentIndex];
+      const currentUrl = win.webContents.getURL();
+      if (isIgnorableLoadUrl(currentUrl) || !urlsMatch(currentUrl, expectedUrl)) {
+        return;
+      }
+
       try {
         const bodyText = await win.webContents.executeJavaScript(
           'document.body.innerText || document.body.textContent'
@@ -167,7 +191,8 @@ function fetchMultipleViaWindow(urls, { timeoutMs = 10000 } = {}) {
       }
     });
 
-    win.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    win.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+      if (isIgnorableLoadUrl(validatedURL)) return;
       if (currentTimeout) {
         clearTimeout(currentTimeout);
         currentTimeout = null;

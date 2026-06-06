@@ -52,7 +52,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   // API
-  fetchUsageData: () => ipcRenderer.invoke('fetch-usage-data'),
+  fetchUsageData: (options) => ipcRenderer.invoke('fetch-usage-data', options || {}),
   getUsageHistory: () => ipcRenderer.invoke('get-usage-history'),
   openExternal: (url) => {
     if (isAllowedExternalUrl(url)) {
@@ -70,6 +70,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
 
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+
+  getPowerState: () => ipcRenderer.invoke('get-power-state'),
 
   // Notifications
   showNotification: (title, body, options = {}) => ipcRenderer.send('show-notification', { title, body, ...options }),

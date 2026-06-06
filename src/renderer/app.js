@@ -9,6 +9,7 @@ let isSidebarMode = false;
 let isFullscreen = false;
 let usageChart = null;
 let graphVisible = false;
+let graphWasVisible = false;
 let suppressSidebarAutoLayout = false;
 let pendingNormalLayoutRestore = false;
 let appInitializing = true;  // suppresses _saveViewState during startup restore
@@ -180,7 +181,10 @@ async function init() {
     applyPanelOpacity(settings.panelOpacity ?? DEFAULT_PANEL_OPACITY);
     warnThreshold = settings.warnThreshold;
     dangerThreshold = settings.dangerThreshold;
-    isOnBatteryPower = false;
+    if (window.electronAPI.getPowerState) {
+        const powerState = await window.electronAPI.getPowerState();
+        isOnBatteryPower = !!powerState?.onBattery;
+    }
 
     // Restore compact mode from saved settings
     if (settings.compactMode) {
@@ -401,7 +405,7 @@ function setupEventListeners() {
     // Listen for session expiration events (403 errors)
     window.electronAPI.onSessionExpired(() => {
         debugLog('Session expired event received');
-        credentials = { sessionKey: null, organizationId: null };
+        credentials = { sessionKey: null, organizationId: null, organizations: [] };
         showLoginRequired();
     });
 
@@ -589,7 +593,8 @@ async function fetchUsageData(options = {}) {
     } catch (error) {
         console.error('Error fetching usage data:', error);
         if (error.message.includes('SessionExpired') || error.message.includes('Unauthorized')) {
-            credentials = { sessionKey: null, organizationId: null };
+            await window.electronAPI.deleteCredentials();
+            credentials = { sessionKey: null, organizationId: null, organizations: [] };
             showLoginRequired();
         } else {
             debugLog('Failed to fetch usage data');
@@ -786,6 +791,7 @@ function buildExtraRows(data) {
         isExpanded = false;
         elements.expandArrow.classList.remove('expanded');
         elements.expandSection.style.display = 'none';
+        _saveViewState();
     }
 
     return count;

@@ -43,7 +43,7 @@ Output: `dist/Claude Meter-{version}-macOS-arm64.dmg`
 ## Usage
 
 1. Launch with `npm start`, or open **Claude Meter** from Applications
-2. Click **Login to Claude** and sign in at claude.ai
+2. Click **Sign In** and complete login in the sign-in window
 3. Usage appears automatically
 
 **Controls:** drag the title bar to move; refresh, graph, settings, minimize, and close in the toolbar.
@@ -66,7 +66,7 @@ This app holds a Claude session key with the same access as your browser session
 
 | Issue | Fix |
 |-------|-----|
-| Login keeps appearing | Re-authenticate via Login to Claude |
+| Login keeps appearing | Re-authenticate via Sign In |
 | Not updating | Check network; click refresh |
 | Won't open after `build:mac` | Right-click **Claude Meter** → Open |
 | Build errors | `rm -rf node_modules && npm install` |

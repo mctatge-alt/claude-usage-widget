@@ -149,6 +149,22 @@ function clearDockBadge() {
   }
 }
 
+async function clearAllCredentials() {
+  store.delete('sessionKey');
+  store.delete('sessionKey_encrypted');
+  store.delete('organizationId');
+  store.delete('organizations');
+  clearDockBadge();
+  const cookies = await session.defaultSession.cookies.get({ url: 'https://claude.ai' });
+  for (const cookie of cookies) {
+    await session.defaultSession.cookies.remove('https://claude.ai', cookie.name);
+  }
+  await session.defaultSession.clearStorageData({
+    storages: ['localstorage', 'sessionstorage', 'cachestorage'],
+    origin: 'https://claude.ai'
+  });
+}
+
 function toggleMainWindowVisibility() {
   if (!mainWindow || mainWindow.isDestroyed()) {
     createMainWindow();
@@ -248,7 +264,10 @@ function createMainWindow() {
       store.set('lastNormalBounds', mainWindow.getBounds());
     }
   });
-  mainWindow.webContents.on('did-finish-load', notifyWindowResize);
+  mainWindow.webContents.on('did-finish-load', () => {
+    notifyWindowResize();
+    mainWindow.webContents.send('power-state-changed', { onBattery: isOnBatteryPower });
+  });
 
   let positionSaveTimer = null;
   mainWindow.on('move', () => {
@@ -709,18 +728,7 @@ function buildTrayContextMenu() {
     {
       label: 'Sign Out',
       click: async () => {
-        store.delete('sessionKey');
-        store.delete('organizationId');
-        store.delete('sessionKey_encrypted');
-        clearDockBadge();
-        const cookies = await session.defaultSession.cookies.get({ url: 'https://claude.ai' });
-        for (const cookie of cookies) {
-          await session.defaultSession.cookies.remove('https://claude.ai', cookie.name);
-        }
-        await session.defaultSession.clearStorageData({
-          storages: ['localstorage', 'sessionstorage', 'cachestorage'],
-          origin: 'https://claude.ai'
-        });
+        await clearAllCredentials();
         if (mainWindow) {
           mainWindow.webContents.send('session-expired');
         }
@@ -1058,11 +1066,12 @@ ipcMain.handle('get-credentials', () => {
   }
   return {
     sessionKey,
-    organizationId: store.get('organizationId')
+    organizationId: store.get('organizationId'),
+    organizations: store.get('organizations', [])
   };
 });
 
-ipcMain.handle('save-credentials', async (event, { sessionKey, organizationId }) => {
+ipcMain.handle('save-credentials', async (event, { sessionKey, organizationId, organizations }) => {
   // Store session key in OS keychain if available
   if (safeStorage.isEncryptionAvailable()) {
     const encrypted = safeStorage.encryptString(sessionKey);
@@ -1075,32 +1084,24 @@ ipcMain.handle('save-credentials', async (event, { sessionKey, organizationId })
   if (organizationId) {
     store.set('organizationId', organizationId);
   }
+  if (Array.isArray(organizations)) {
+    store.set('organizations', organizations);
+  }
   // Also set cookie in Electron session for window-based fetching
   await setSessionCookie(sessionKey);
   return true;
 });
 
 ipcMain.handle('delete-credentials', async () => {
-  store.delete('sessionKey');
-  store.delete('sessionKey_encrypted');
-  store.delete('organizationId');
-  clearDockBadge();
-  // Remove all Claude.ai cookies
-  const cookies = await session.defaultSession.cookies.get({ url: 'https://claude.ai' });
-  for (const cookie of cookies) {
-    await session.defaultSession.cookies.remove('https://claude.ai', cookie.name);
-  }
-  // Clear any cached data from the Electron session (storage, cache)
-  // so nothing lingers on shared machines
-  await session.defaultSession.clearStorageData({
-    storages: ['localstorage', 'sessionstorage', 'cachestorage'],
-    origin: 'https://claude.ai'
-  });
+  await clearAllCredentials();
   return true;
 });
 
 // Validate a sessionKey by fetching org ID via hidden BrowserWindow
 ipcMain.handle('validate-session-key', async (event, sessionKey) => {
+  if (!sessionKey || typeof sessionKey !== 'string') {
+    return { success: false, error: 'Invalid session key' };
+  }
   debugLog('Validating session key:', sessionKey.substring(0, 20) + '...');
   try {
     // Set the cookie in Electron's session first
@@ -1203,6 +1204,10 @@ ipcMain.on('open-external', (event, url) => {
 ipcMain.handle('get-app-version', () => {
   return app.getVersion();
 });
+
+ipcMain.handle('get-power-state', () => ({
+  onBattery: isOnBatteryPower
+}));
 
 ipcMain.handle('get-usage-history', () => {
   const history = store.get('usageHistory', []);
@@ -1480,7 +1485,6 @@ ipcMain.handle('fetch-usage-data', async (event, options = {}) => {
   // user won't see the extra usage data anyway.
   // If forceExtended is passed (e.g., when user clicks expand), use that instead of saved setting
   const expandedOpen = options.forceExtended !== undefined ? options.forceExtended : store.get('settings.expandedOpen', false);
-  const compactMode = store.get('settings.compactMode', false);
   const shouldFetchExtended = expandedOpen;
 
   const usageUrl = `https://claude.ai/api/organizations/${organizationId}/usage`;
@@ -1532,8 +1536,7 @@ ipcMain.handle('fetch-usage-data', async (event, options = {}) => {
       || error.message.startsWith('CloudflareChallenge')
       || error.message.startsWith('UnexpectedHTML');
     if (isBlocked) {
-      store.delete('sessionKey');
-      store.delete('organizationId');
+      await clearAllCredentials();
       if (mainWindow) {
         mainWindow.webContents.send('session-expired');
       }
@@ -1709,8 +1712,9 @@ if (!gotTheLock) {
 } else {
   app.on('second-instance', () => {
     if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.focus();
+      showMainWindowClean();
+    } else {
+      createMainWindow();
     }
   });
 }
